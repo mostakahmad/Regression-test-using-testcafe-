@@ -1,7 +1,9 @@
 import { Selector } from 'testcafe';
+import { Role } from 'testcafe';
+import { RequestLogger } from 'testcafe';
 
 fixture `Github Log In`
-    .page `https://github.com`;
+    .page `https://github.com/login`;
 
     const logInBtn = Selector("a[href='/login']");
     const submitBtn = Selector("input[name='commit']");
@@ -18,26 +20,40 @@ fixture `Github Log In`
     const textBox = Selector("input[aria-label='Type in the name of the repository to confirm that you want to delete this repository.']");
     const repoDltBtn = Selector("button[type='submit']").withText('I understand the consequences, delete this repository');
 
-test('Test 1 : Log in', async t =>{
-    await t
-        .click(logInBtn)
-        .typeText('#login_field', 'email') /// Here email will be replaced by user Email Address
-        .typeText('#password', 'pass') /// & pass will be replaced by user Github password
-        .click(submitBtn)
-        .wait(1000);
 
-        console.log('Log In Successfully!');
+const logInGithub = Role('https://github.com/login', async t => {
+    await t
+        .typeText('#login_field', 'email') /// Here email will be replaced by user Email Address
+        .typeText('#password', 'pass')            /// & pass will be replaced by user Github password
+        .click(submitBtn);
+}, { preserveUrl: true });
+
+const logger = RequestLogger('https://github.com/login');
+
     
-    await t.wait(2000);      
+
+test
+    .requestHooks(logger)
+    ('Test 1', async t =>{
+        await t
+            .useRole(logInGithub);
+
+            if( logger.requests[0].response.statusCode == 200 ){
+
+                console.log('Log In Successfully!');
+
+            }
+            else{
+                
+                 console.log('Sorry!'); 
+            }
+            
+       
 });
 
-test('Test 2 : Create Github Project', async t =>{
+test('Test 2', async t =>{
     await t
-        .click(logInBtn)
-        .typeText('#login_field', 'email') /// Here email will be replaced by user Email Address
-        .typeText('#password', 'pass') /// & pass will be replaced by user Github password
-        .click(submitBtn)   
-        .wait(1000)
+        .useRole(logInGithub)
         .click(createRepoBtn)
         .typeText('#repository_name', 'Testing Repository Creation')
         .typeText('#repository_description', 'This is a simple testing project. Tester is testing to create a new repostory.')
@@ -49,16 +65,11 @@ test('Test 2 : Create Github Project', async t =>{
     await t.wait(2000); 
 });
 
-test('Test 3 : Edit Github Project', async t =>{
+test('Test 3', async t =>{
     await t
-        .click(logInBtn)
-        .typeText('#login_field', 'email') /// Here email will be replaced by user Email Address
-        .typeText('#password', 'pass') /// & pass will be replaced by user Github password
-        .click(submitBtn)
+        .useRole(logInGithub)
         .click(profileBtn)
-        .wait(1000)
         .click(myRepoBtn)
-        .wait(1000)
         .click(repoBtn)
         .wait(1000)
         .click(settingBtn)
@@ -73,16 +84,11 @@ test('Test 3 : Edit Github Project', async t =>{
     await t.wait(2000);
 });
 
-test('Test 4 : Delete Github Project', async t =>{
+test('Test 4', async t =>{
     await t
-        .click(logInBtn)
-        .typeText('#login_field', 'email') /// Here email will be replaced by user Email Address
-        .typeText('#password', 'pass') /// & pass will be replaced by user Github password
-        .click(submitBtn)
+        .useRole(logInGithub)
         .click(profileBtn)
-        .wait(1000)
         .click(myRepoBtn)
-        .wait(1000)
         .click(repoBtn2)
         .wait(1000)
         .click(settingBtn2)
